@@ -311,3 +311,9 @@ mono_threads_assert_gc_safe_region (void)
 {
 	MONO_REQ_GC_SAFE_MODE;
 }
+
+void
+mono_threads_assert_gc_starting_region (void)
+{
+	MONO_REQ_GC_STARTING_MODE;
+}

@@ -239,6 +239,24 @@ assert_gc_neutral_mode (void)
 	}
 }
 
+void
+assert_gc_starting_mode (void)
+{
+	MonoThreadInfo *cur = mono_thread_info_current ();
+	int state;
+
+	if (!cur)
+		return; //
+
+	switch (state = mono_thread_info_current_state (cur)) {
+	case STATE_STARTING:
+		break;
+	default:
+		assertion_fail ("Expected GC Starting mode but was in %s state", mono_thread_state_name (state));
+	}
+
+}
+
 void *
 critical_gc_region_begin(void)
 {

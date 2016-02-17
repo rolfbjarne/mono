@@ -29,6 +29,9 @@ mono_threads_exit_gc_unsafe_region (gpointer cookie, gpointer* stackdata);
 MONO_API void
 mono_threads_assert_gc_unsafe_region (void);
 
+MONO_API void
+mono_threads_assert_gc_starting_region (void);
+
 MONO_API gpointer
 mono_threads_enter_gc_safe_region (gpointer *stackdata);
 

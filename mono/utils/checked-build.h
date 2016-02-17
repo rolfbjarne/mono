@@ -105,6 +105,10 @@ Functions that can be called from both coop or preept modes.
 	assert_gc_neutral_mode ();	\
 } while (0);
 
+#define MONO_REQ_GC_STARTING_MODE do {  \
+	assert_gc_starting_mode (); \
+} while (0);
+
 /* In a GC critical region, the thread is not allowed to switch to GC safe mode.
  * For example if the thread is about to call a method that will manipulate managed objects.
  * The GC critical region must only occur in unsafe mode.
@@ -131,6 +135,7 @@ Functions that can be called from both coop or preept modes.
 void assert_gc_safe_mode (void);
 void assert_gc_unsafe_mode (void);
 void assert_gc_neutral_mode (void);
+void assert_gc_starting_mode (void);
 
 void* critical_gc_region_begin(void);
 void critical_gc_region_end(void* token);
@@ -142,6 +147,7 @@ void assert_in_gc_critical_region (void);
 #define MONO_REQ_GC_SAFE_MODE
 #define MONO_REQ_GC_UNSAFE_MODE
 #define MONO_REQ_GC_NEUTRAL_MODE
+#define MONO_REQ_GC_STARTING_MODE
 
 #define MONO_PREPARE_GC_CRITICAL_REGION
 #define MONO_FINISH_GC_CRITICAL_REGION
