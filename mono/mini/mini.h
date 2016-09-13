@@ -3153,6 +3153,7 @@ void mono_runtime_cleanup_handlers (void);
 void mono_runtime_setup_stat_profiler (void);
 void mono_runtime_shutdown_stat_profiler (void);
 void mono_runtime_posix_install_handlers (void);
+gboolean mono_runtime_install_chained_signal_handler (int signal, const struct sigaction *handler, struct sigaction *previous_handler);
 pid_t mono_runtime_syscall_fork (void);
 void mono_gdb_render_native_backtraces (pid_t crashed_pid);
 
