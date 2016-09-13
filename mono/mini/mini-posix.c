@@ -200,7 +200,7 @@ mono_runtime_install_chained_signal_handler (int signal, const struct sigaction 
 	if (!mono_saved_signal_handlers)
 		return FALSE;
 
-	if (!g_hash_table_lookup (mono_saved_signal_handlers, GINT_TO_POINTER (signal), NULL, &original_value))
+	if (!g_hash_table_lookup_extended (mono_saved_signal_handlers, GINT_TO_POINTER (signal), NULL, &original_value))
 		return FALSE;
 
 	if (previous_handler)
