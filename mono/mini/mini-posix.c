@@ -181,6 +181,30 @@ free_saved_signal_handlers (void)
 }
 
 /*
+ * mono_runtime_install_chained_signal_handler:
+ *
+ * Installs a signal handler that will be called when mono
+ * handles a signal and determines the signal occurred in
+ * code that mono does not care about.
+ *
+ */
+void
+mono_runtime_install_chained_signal_handler (int signal, const struct sigaction *handler, struct sigaction *previous_handler)
+{
+	gpointer original_value;
+
+	if (!mono_saved_signal_handlers)
+		mono_saved_signal_handlers = g_hash_table_new_full (NULL, NULL, NULL, g_free);
+
+	if (previous_handler && g_hash_table_lookup_extended (mono_saved_signal_handlers, GINT_TO_POINTER (signal), NULL, &original_value))
+		*previous_handler = *(struct sigaction *) original_value;
+
+	struct sigaction *handler_to_save = (struct sigaction *) g_malloc (sizeof (struct sigaction));
+	*handler_to_save = *handler;
+	g_hash_table_replace (mono_saved_signal_handlers, GINT_TO_POINTER (signal), handler_to_save);
+}
+
+/*
  * mono_chain_signal:
  *
  *   Call the original signal handler for the signal given by the arguments, which
