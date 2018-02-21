@@ -183,6 +183,12 @@ namespace Mono.Security.X509 {
 				else
 					m_signaturealgoparams = null;
 
+				var hashName = PKCS1.HashNameFromOid (m_signaturealgo, false);
+				using (var hash = PKCS1.CreateFromName (hashName)) {
+					if (hash == null)
+						throw new CryptographicException ("Unsupported hash algorithm: " + hashName);
+				}
+
 				// Certificate / TBSCertificate / issuerUniqueID
 				ASN1 issuerUID = tbsCertificate.Element (tbs, 0x81);
 				if (issuerUID != null) {
