@@ -71,11 +71,12 @@ public class SslStreamTest {
 
 	void AuthenticateClientAndServer (bool server, bool client)
 	{
-		IPEndPoint endPoint = new IPEndPoint (IPAddress.Parse ("127.0.0.1"), NetworkHelpers.FindFreePort ());
+		IPEndPoint endPoint = new IPEndPoint (IPAddress.Parse ("127.0.0.1"), 0);
 		ClientServerState state = new ClientServerState ();
 		state.Client = new TcpClient ();
 		state.Listener = new TcpListener (endPoint);
 		state.Listener.Start ();
+		endPoint = (IPEndPoint) state.Listener.LocalEndpoint;
 		state.ServerAuthenticated = new AutoResetEvent (false);
 		state.ClientAuthenticated = new AutoResetEvent (false);
 		state.ServerIOException = !server;

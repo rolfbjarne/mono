@@ -2320,14 +2320,12 @@ namespace MonoTests.System.Net
 
 		void DoRequest (Action<HttpWebRequest, EventWaitHandle> request, Action<HttpListenerContext> processor)
 		{
-			int port = NetworkHelpers.FindFreePort ();
-
 			ManualResetEvent [] completed = new ManualResetEvent [2];
 			completed [0] = new ManualResetEvent (false);
 			completed [1] = new ManualResetEvent (false);
 			ExceptionDispatchInfo edi = null;
 
-			using (ListenerScope scope = new ListenerScope (processor, port, completed [0], e => { edi = ExceptionDispatchInfo.Capture (e); })) {
+			using (ListenerScope scope = new ListenerScope (processor, out var port, completed [0], e => { edi = ExceptionDispatchInfo.Capture (e); })) {
 				Uri address = new Uri (string.Format ("http://localhost:{0}", port));
 				HttpWebRequest client = (HttpWebRequest) WebRequest.Create (address);
 
@@ -2556,16 +2554,13 @@ namespace MonoTests.System.Net
 			Action<HttpListenerContext> processor;
 			Action<Exception> eh;
 
-			public ListenerScope (Action<HttpListenerContext> processor, int port, EventWaitHandle completed, Action<Exception> exceptionHandler)
+			public ListenerScope (Action<HttpListenerContext> processor, out int port, EventWaitHandle completed, Action<Exception> exceptionHandler)
 			{
 				this.processor = processor;
 				this.completed = completed;
 				this.eh = exceptionHandler;
 
-				this.listener = new HttpListener ();
-				this.listener.Prefixes.Add (string.Format ("http://localhost:{0}/", port));
-				this.listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
-				this.listener.Start ();
+				this.listener = HttpListener2Test.CreateAndStartListener ("http://localhost:", "/", out port, AuthenticationSchemes.Anonymous);
 
 				this.listener.BeginGetContext (this.RequestHandler, null);
 			}

@@ -433,11 +433,10 @@ namespace MonoTests.System.Net {
 #endif
 	public void TestReceiveCancelation ()
 	{
-		var uri = "http://localhost:" + NetworkHelpers.FindFreePort () + "/";
-
-		HttpListener listener = new HttpListener ();
-		listener.Prefixes.Add (uri);
-		listener.Start ();
+		var host = "http://localhost:";
+		var path = "/";
+		HttpListener listener = HttpListener2Test.CreateAndStartListener (host, path, out var port);
+		var uri = host + port + path;
 
 		try {
 			for (var i = 0; i < 10; i++) {

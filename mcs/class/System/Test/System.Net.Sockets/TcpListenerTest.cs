@@ -28,10 +28,10 @@ namespace MonoTests.System.Net.Sockets
 #endif
 		public void TcpListener ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// listen with a new listener (IPv4 is the default)
-			TcpListener inListener = new TcpListener (port);
+			TcpListener inListener = new TcpListener (0);
 			inListener.Start();
+			var port = ((IPEndPoint) inListener.LocalEndpoint).Port;
 			
 
 			// connect to it from a new socket
@@ -130,7 +130,7 @@ namespace MonoTests.System.Net.Sockets
 		class MyListener : TcpListener
 		{
 			public MyListener ()
-				: base (IPAddress.Loopback, NetworkHelpers.FindFreePort ())
+				: base (IPAddress.Loopback, 0)
 			{
 			}
 
@@ -204,8 +204,7 @@ namespace MonoTests.System.Net.Sockets
 #endif
 		public void StartListenMoreThan5 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			TcpListener listen = new TcpListener (IPAddress.Loopback, port);
+			TcpListener listen = new TcpListener (IPAddress.Loopback, 0);
 
 			listen.Start (6);
 			listen.Stop ();
@@ -229,10 +228,9 @@ namespace MonoTests.System.Net.Sockets
 #endif
 		public void EndAcceptTcpClient ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-
-			var listenerSocket = new TcpListener (IPAddress.Any, port);
+			var listenerSocket = new TcpListener (IPAddress.Any, 0);
 			listenerSocket.Start ();
+			var port = ((IPEndPoint) listenerSocket.LocalEndpoint).Port;
 			listenerSocket.BeginAcceptTcpClient (new AsyncCallback (l => {
 				listenerSocket.EndAcceptTcpClient (l);
 			}), null);

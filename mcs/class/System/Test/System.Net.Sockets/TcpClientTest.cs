@@ -38,9 +38,9 @@ namespace MonoTests.System.Net.Sockets
 			Socket lSock = new Socket(AddressFamily.InterNetwork,
 				SocketType.Stream, ProtocolType.Tcp);
 			
-			var port = NetworkHelpers.FindFreePort ();
-			lSock.Bind(new IPEndPoint(IPAddress.Any, port));
+			lSock.Bind(new IPEndPoint(IPAddress.Any, 0));
 			lSock.Listen(-1);
+			var port = ((IPEndPoint) lSock.LocalEndPoint).Port;
 
 
 			// connect to it with a TcpClient
@@ -84,9 +84,11 @@ namespace MonoTests.System.Net.Sockets
 #endif
 		public void CloseTest ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			IPEndPoint localEP = new IPEndPoint (IPAddress.Loopback, port);
+			var port = 0;
+			IPEndPoint localEP = new IPEndPoint (IPAddress.Loopback, 0);
 			using (SocketResponder sr = new SocketResponder (localEP, s => CloseRequestHandler (s))) {
+				localEP = (IPEndPoint) sr.TcpListener.LocalEndpoint;
+				port = localEP.Port;
 				TcpClient tcpClient = new TcpClient (IPAddress.Loopback.ToString (), port);
 				NetworkStream ns = tcpClient.GetStream ();
 				Assert.IsNotNull (ns, "#A1");

@@ -1888,13 +1888,12 @@ namespace MonoTests.System.Net
 #endif
 		public void UploadFileAsyncContentType ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			var serverUri = "http://localhost:" + port + "/";
+			var host = "http://localhost:";
+			var path = "/";
 			var filename = Path.GetTempFileName ();
 
-			HttpListener listener = new HttpListener ();
-			listener.Prefixes.Add (serverUri);
-			listener.Start ();
+			HttpListener listener = HttpListener2Test.CreateAndStartListener (host, path, out var port);
+			var serverUri = host + port + path;
 
 			using (var client = new WebClient ())
 			{

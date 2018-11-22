@@ -62,21 +62,25 @@ namespace MonoTests.System.Net {
 			}
 		}
 
-		public static HttpListener CreateAndStartListener (string prefix)
+		public static HttpListener CreateAndStartListener (string host, string path, out int port, AuthenticationSchemes? authSchemes = null)
 		{
-			HttpListener listener = new HttpListener ();
-			listener.Prefixes.Add (prefix);
-			listener.Start ();
-			return listener;
-		}
-
-		public static HttpListener CreateAndStartListener (string prefix, AuthenticationSchemes authSchemes)
-		{
-			HttpListener listener = new HttpListener ();
-			listener.AuthenticationSchemes = authSchemes;
-			listener.Prefixes.Add (prefix);
-			listener.Start ();
-			return listener;
+			for (int i = 0; i < 10; i++) {
+				try {
+					var listener = new HttpListener ();
+					var tentativePort = NetworkHelpers.FindFreePort (); // FindFreePort might return a port that's immediately used by something else, so try a few times.
+					if (authSchemes.HasValue)
+						listener.AuthenticationSchemes = authSchemes.Value;
+					listener.Prefixes.Add (host + tentativePort + path);
+					listener.Start ();
+					port = tentativePort;
+					return listener;
+				} catch (SocketException se) {
+					if (se.SocketErrorCode == SocketError.AddressAlreadyInUse)
+						continue;
+					throw;
+				}
+			}
+			throw new Exception ("Unable to create HttpListener after 10 attempts");
 		}
 
 		public static MyNetworkStream CreateNS (int port)
@@ -151,8 +155,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test1 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test1/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test1/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "GET / HTTP/1.1\r\n\r\n"); // No host
 			string response = Receive (ns, 512);
@@ -166,8 +169,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test2 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test2/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test2/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"); // no prefix
 			string response = Receive (ns, 512);
@@ -205,8 +207,7 @@ namespace MonoTests.System.Net {
 			bad.Append ('}');
 
 			foreach (char b in bad.ToString ()){
-				var port = NetworkHelpers.FindFreePort ();
-				HttpListener listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test3/");
+				HttpListener listener = CreateAndStartListener ("http://127.0.0.1:", "/test3/", out var port);
 				NetworkStream ns = CreateNS (port);
 				Send (ns, String.Format ("MA{0} / HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", b)); // bad method
 				
@@ -223,8 +224,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test4 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test4/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test4/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test4/ HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"); // length required
 			string response = Receive (ns, 512);
@@ -238,8 +238,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test5 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test5/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test5/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "POST / HTTP/1.1\r\nHost: 127.0.0.1\r\nTransfer-Encoding: pepe\r\n\r\n"); // not implemented
 			string response = Receive (ns, 512);
@@ -253,8 +252,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test6 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test6/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test6/", out var port);
 			NetworkStream ns = CreateNS (port);
 			 // not implemented! This is against the RFC. Should be a bad request/length required
 			Send (ns, "POST /test6/ HTTP/1.1\r\nHost: 127.0.0.1\r\nTransfer-Encoding: identity\r\n\r\n");
@@ -269,8 +267,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test7 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test7/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test7/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test7/ HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 3\r\n\r\n123");
 			HttpListenerContext ctx = _listener.GetContext ();
@@ -288,8 +285,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test8 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test8/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test8/", out var port);
 			NetworkStream ns = CreateNS (port);
 			// Just like Test7, but 1.0
 			Send (ns, "POST /test8/ HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Length: 3\r\n\r\n123");
@@ -308,9 +304,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test9 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 1.0 + "Transfer-Encoding: chunked"
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test9/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test9/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test9/ HTTP/1.0\r\nHost: 127.0.0.1\r\nTransfer-Encoding: chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n");
 			bool timeout;
@@ -326,9 +321,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test10 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// Same as Test9, but now we shutdown the socket for sending.
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test10/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test10/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test10/ HTTP/1.0\r\nHost: 127.0.0.1\r\nTransfer-Encoding: chunked\r\n\r\n3\r\n123\r\n0\r\n\r\n");
 			ns.GetSocket ().Shutdown (SocketShutdown.Send);
@@ -345,9 +339,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test11 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 0.9
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test11/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test11/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test11/ HTTP/0.9\r\nHost: 127.0.0.1\r\n\r\n123");
 			ns.GetSocket ().Shutdown (SocketShutdown.Send);
@@ -362,9 +355,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test12 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 0.9
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test12/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test12/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test12/ HTTP/0.9\r\nHost: 127.0.0.1\r\nContent-Length: 3\r\n\r\n123");
 			ns.GetSocket ().Shutdown (SocketShutdown.Send);
@@ -379,9 +371,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test13 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 0.9
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test13/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test13/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "GEt /test13/ HTTP/0.9\r\nHost: 127.0.0.1\r\n\r\n");
 			ns.GetSocket ().Shutdown (SocketShutdown.Send);
@@ -399,8 +390,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test14 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test14/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test14/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test14/ HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Length: 3\r\n\r\n123");
 			HttpListenerContext c = _listener.GetContext ();
@@ -438,9 +428,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test15 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 2 separate writes -> 2 packets. Body size > 8kB
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test15/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test15/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			Send (ns, "POST /test15/ HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Length: 8888\r\n\r\n");
 			Thread.Sleep (800);
@@ -463,9 +452,8 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test16 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
 			// 1 single write with headers + body (size > 8kB)
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test16/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test16/", out var port);
 			MyNetworkStream ns = CreateNS (port);
 			StringBuilder sb = new StringBuilder ();
 			sb.Append ("POST /test16/ HTTP/1.0\r\nHost: 127.0.0.1\r\nContent-Length: 8888\r\n\r\n");
@@ -490,8 +478,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test17 ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/test17/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/test17/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "RANDOM /test17/ HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 3\r\n\r\n123");
 			HttpListenerContext ctx = _listener.GetContext ();
@@ -509,8 +496,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test_MultipleClosesOnOuputStreamAllowed ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + port + "/MultipleCloses/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/MultipleCloses/", out var port);
 			NetworkStream ns = CreateNS (port);
 			Send (ns, "GET /MultipleCloses/ HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
 
@@ -542,8 +528,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void ReceiveCookiesFromClient ()
 		{
-			sendCookiePort = NetworkHelpers.FindFreePort ();			
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + sendCookiePort + "/SendCookie/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/SendCookie/", out sendCookiePort);
 			Thread clientThread = new Thread (new ThreadStart (SendCookie));
 			clientThread.Start ();
 
@@ -591,8 +576,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void SendCookiestoClient ()
 		{
-			receiveCookiePort = NetworkHelpers.FindFreePort ();
-			_listener = CreateAndStartListener ("http://127.0.0.1:" + receiveCookiePort + "/ReceiveCookie/");
+			_listener = CreateAndStartListener ("http://127.0.0.1:", "/ReceiveCookie/", out receiveCookiePort);
 			Thread clientThread = new Thread (new ThreadStart (ReceiveCookie));
 			clientThread.Start ();
 
@@ -645,9 +629,10 @@ namespace MonoTests.System.Net {
 #endif
 		public void MultiResponses ()
 		{
-			echoServerPort = NetworkHelpers.FindFreePort ();
+			echoServerStarted = new ManualResetEvent (false);
 			Thread srv = new Thread (new ThreadStart (EchoServer));
 			srv.Start ();
+			echoServerStarted.WaitOne ();
 			Thread.Sleep (200);
 
 			for (int i = 0; i < 10; i++) {
@@ -674,11 +659,11 @@ namespace MonoTests.System.Net {
 		}
 
 		int echoServerPort;
+		ManualResetEvent echoServerStarted;
 		void EchoServer ()
 		{
-			_listener = new HttpListener ();
-			_listener.Prefixes.Add ("http://*:" + echoServerPort + "/foobar/");
-			_listener.Start ();
+			_listener = CreateAndStartListener ("http://*:", "/foobar/", out echoServerPort);
+			echoServerStarted.Set ();
 
 			manualReset = new ManualResetEvent (false);
 
@@ -715,8 +700,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void TestNonChunkedAsync ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:" + port + "/");
+			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/", out var port);
 
 			listener.BeginGetContext (callback, listener);
 			
@@ -772,8 +756,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test_MultipleConnections ()
 		{
-			var port = NetworkHelpers.FindFreePort ();			
-			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:" + port + "/multiple/");
+			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/multiple/", out var port);
 
 			// First one
 			NetworkStream ns = HttpListener2Test.CreateNS (port);
@@ -807,7 +790,7 @@ namespace MonoTests.System.Net {
 		{
 			var wait = new ManualResetEvent (false);
 			var wait2 = new ManualResetEvent (false);
-			var port = NetworkHelpers.FindFreePort ();
+			var port = 0;
 			
 			Thread t = new Thread (delegate (object a) {
 				wait.WaitOne ();
@@ -820,7 +803,7 @@ namespace MonoTests.System.Net {
 			});
 			t.Start ();
 				
-			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://*:" + port + "/");
+			HttpListener listener = HttpListener2Test.CreateAndStartListener ("http://*:", "/", out port);
 			wait.Set ();
 			HttpListenerContext ctx = listener.GetContext ();
 			
@@ -837,10 +820,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void ClosePort ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			var h = new HttpListener ();
-			h.Prefixes.Add ("http://127.0.0.1:" + port + "/");
-			h.Start ();
+			var h = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/", out var port);
 			h.BeginGetContext (null, null);
 			h.Stop ();
 			TcpListener t = new TcpListener (IPAddress.Parse ("127.0.0.1"), port);
@@ -872,16 +852,15 @@ namespace MonoTests.System.Net {
 				Assert.Ignore ("Hostname couldn't be resolved.");
 			}
 			
-			int port = NetworkHelpers.FindFreePort ();;
-			var h = new HttpListener ();
+			IPAddress ma = null;;
 			// Listen on the first IPV4 interface
 			foreach (IPAddress a in machineAddress) {
 				if (a.AddressFamily == AddressFamily.InterNetwork) {
-					h.Prefixes.Add ("http://" + a + ":" + port + "/");
-					h.Start ();
+					ma = a;
 					break;
 				}
 			}
+			var h = HttpListener2Test.CreateAndStartListener ("http://" + ma + ":", "/", out var port);
 
 			try {
 				var c = new TcpClient ("localhost", port);
@@ -898,10 +877,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void BindToAllInterfaces ()
 		{
-			var h = new HttpListener ();
-			int port = NetworkHelpers.FindFreePort ();
-			h.Prefixes.Add ("http://*:" + port + "/");
-			h.Start ();
+			var h = HttpListener2Test.CreateAndStartListener ("http://*:", "/", out var port);
 			var c = new TcpClient ("localhost", port);
 			h.Stop ();
 		}
@@ -913,8 +889,7 @@ namespace MonoTests.System.Net {
 #endif
 		public void Test_EmptyLineAtStart ()
 		{
-			var port = NetworkHelpers.FindFreePort ();
-			var listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:" + port + "/");
+			var listener = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/", out var port);
 			var ns = HttpListener2Test.CreateNS (port);
 
 			HttpListener2Test.Send (ns, "\r\nGET / HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
