@@ -43,7 +43,7 @@ namespace MonoTests.System.Configuration
 		[SetUp]
 		public void SetUp ()
 		{
-			foldername = Path.Combine (Path.GetTempPath (),
+			foldername = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (),
 				this.GetType ().FullName);
 			if (!Directory.Exists (foldername))
 				Directory.CreateDirectory (foldername);

@@ -42,9 +42,7 @@ namespace MonoTests.System.Configuration {
 		[SetUp]
 		public void SetUp ()
 		{
-			tempFolder = Path.Combine (Path.GetTempPath (), this.GetType ().FullName);
-			if (!Directory.Exists (tempFolder))
-				Directory.CreateDirectory (tempFolder);
+			tempFolder = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), this.GetType ().FullName);
 		}
 
 		[TearDown]

@@ -54,7 +54,7 @@ namespace MonoTests.System.IO
 		[ExpectedException (typeof (ArgumentNullException))]
 		public void CheckCtor4 ()
 		{
-			FileSystemWatcher fw = new FileSystemWatcher (Path.GetTempPath (), null);
+			FileSystemWatcher fw = new FileSystemWatcher (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), null);
 		}
 
 		[Test]
@@ -62,8 +62,8 @@ namespace MonoTests.System.IO
 		// [ExpectedException (typeof (ArgumentException))]
 		public void CheckCtor5 ()
 		{
-			FileSystemWatcher fw = new FileSystemWatcher (Path.GetTempPath (), "invalidpath|");
-			fw = new FileSystemWatcher (Path.GetTempPath (), "*");
+			FileSystemWatcher fw = new FileSystemWatcher (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "invalidpath|");
+			fw = new FileSystemWatcher (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "*");
 		}
 
 		[Test]
@@ -71,7 +71,7 @@ namespace MonoTests.System.IO
 		[ExpectedException (typeof (ArgumentException))]
 		public void CheckInvalidPath ()
 		{
-			FileSystemWatcher fw = new FileSystemWatcher (Path.GetTempPath (), "invalidpath|");
+			FileSystemWatcher fw = new FileSystemWatcher (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "invalidpath|");
 			fw.Path = "invalidpath|";
 		}
 
@@ -80,7 +80,7 @@ namespace MonoTests.System.IO
 		[ExpectedException (typeof (ArgumentException))]
 		public void CheckPathWildcard ()
 		{
-			FileSystemWatcher fw = new FileSystemWatcher (Path.GetTempPath (), "*");
+			FileSystemWatcher fw = new FileSystemWatcher (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "*");
 			fw.Path = "*";
 		}
 	}

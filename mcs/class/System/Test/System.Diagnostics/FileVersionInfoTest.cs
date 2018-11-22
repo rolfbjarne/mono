@@ -29,10 +29,7 @@ namespace MonoTests.System.Diagnostics
 		[SetUp]
 		public void SetUp ()
 		{
-			tempDir = Path.Combine (Path.GetTempPath (), Environment.UserName);
-			tempDir = Path.Combine (tempDir, "MonoTests.System.Diagnostics.AppDomainTest");
-			if (!Directory.Exists (tempDir))
-				Directory.CreateDirectory (tempDir);
+			tempDir = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 		}
 
 		[TearDown]

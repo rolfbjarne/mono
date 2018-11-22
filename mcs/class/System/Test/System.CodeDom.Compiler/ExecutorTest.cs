@@ -55,7 +55,7 @@ namespace MonoTests.System.CodeDom.Compiler
 		{
 			cmd = "ping"; // available everywhere
 			cd = Environment.CurrentDirectory;
-			temp = Path.GetTempPath ();
+			temp = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			tfc = new TempFileCollection ();
 			winid = WindowsIdentity.GetCurrent ();
 			token = winid.Token;

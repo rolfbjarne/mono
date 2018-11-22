@@ -34,7 +34,7 @@ namespace MonoTests.System.Net
 		[SetUp]
 		public void SetUp ()
 		{
-			_tempDirectory = Path.Combine (Path.GetTempPath (), "MonoTests.System.Net.FileWebRequestTest");
+			_tempDirectory = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "MonoTests.System.Net.FileWebRequestTest");
 			_tempFile = Path.Combine (_tempDirectory, "FileWebRequestTest.tmp");
 			if (!Directory.Exists (_tempDirectory)) {
 				Directory.CreateDirectory (_tempDirectory);

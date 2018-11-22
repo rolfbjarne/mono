@@ -50,7 +50,7 @@ namespace MonoCasTests.System.CodeDom.Compiler {
 		public void FixtureSetUp ()
 		{
 			// at full trust
-			temp = Path.GetTempPath ();
+			temp = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			array = new string[1];
 		}
 

@@ -170,7 +170,7 @@ namespace MonoTests.System.Configuration {
 		public void FixtureSetup ()
 		{
 			// Use random temp directory to store settings files of tests.
-			tempDir = Path.Combine (Path.GetTempPath (), Path.GetRandomFileName ());
+			tempDir = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), Path.GetRandomFileName ());
 			Directory.CreateDirectory (tempDir);
 			var localAppData = Path.Combine (tempDir, "LocalAppData");
 			Directory.CreateDirectory (localAppData);

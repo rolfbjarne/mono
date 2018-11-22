@@ -75,7 +75,7 @@ namespace MonoTests.System.Diagnostics
 				return;
 
 			// determine temp directory for eventlog store
-			_eventLogStore = Path.Combine (Path.GetTempPath (),
+			_eventLogStore = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (),
 				Guid.NewGuid ().ToString ());
 
 			// save original eventlog implementation type (if set)

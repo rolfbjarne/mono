@@ -139,7 +139,7 @@ namespace MonoTests.System.Net
 		[Test] // DownloadFile (string, string)
 		public void DownloadFile1_Address_SchemeNotSupported ()
 		{
-			string file = Path.Combine (Path.GetTempPath (), "tmp.out");
+			string file = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "tmp.out");
 			WebClient wc = new WebClient ();
 			try {
 				wc.DownloadFile ("tp://scheme.notsupported", file);
@@ -200,7 +200,7 @@ namespace MonoTests.System.Net
 		[Test] // DownloadFile (Uri, string)
 		public void DownloadFile2_Address_SchemeNotSupported ()
 		{
-			string file = Path.Combine (Path.GetTempPath (), "tmp.out");
+			string file = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "tmp.out");
 			WebClient wc = new WebClient ();
 			try {
 				wc.DownloadFile (new Uri ("tp://scheme.notsupported"), file);
@@ -873,7 +873,7 @@ namespace MonoTests.System.Net
 		[Test] // UploadFile (string, string)
 		public void UploadFile1_FileName_NotFound ()
 		{
-			var tempPath = Path.GetTempPath ();
+			var tempPath = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			string tempFile = Path.Combine (tempPath, Path.GetRandomFileName ());
 
 			WebClient wc = new WebClient ();
@@ -967,7 +967,7 @@ namespace MonoTests.System.Net
 		[Test] // UploadFile (Uri, string)
 		public void UploadFile2_FileName_NotFound ()
 		{
-			var tempPath = Path.GetTempPath ();
+			var tempPath = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			string tempFile = Path.Combine (tempPath, Path.GetRandomFileName ());
 
 			WebClient wc = new WebClient ();
@@ -1061,7 +1061,7 @@ namespace MonoTests.System.Net
 		[Test] // UploadFile (string, string, string)
 		public void UploadFile3_FileName_NotFound ()
 		{
-			var tempPath = Path.GetTempPath ();
+			var tempPath = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			string tempFile = Path.Combine (tempPath, Path.GetRandomFileName ());
 
 			WebClient wc = new WebClient ();
@@ -1155,7 +1155,7 @@ namespace MonoTests.System.Net
 		[Test] // UploadFile (Uri, string, string)
 		public void UploadFile4_FileName_NotFound ()
 		{
-			var tempPath = Path.GetTempPath ();
+			var tempPath = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ();
 			string tempFile = Path.Combine (tempPath, Path.GetRandomFileName ());
 
 			WebClient wc = new WebClient ();
