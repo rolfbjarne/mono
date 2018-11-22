@@ -25,10 +25,7 @@ namespace MonoTests.System.Net.Mail
 		[SetUp]
 		public void GetReady ()
 		{
-			tempFolder = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), this.GetType ().FullName);
-			if (Directory.Exists (tempFolder))
-				Directory.Delete (tempFolder, true);
-			Directory.CreateDirectory (tempFolder);
+			tempFolder = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (this.GetType ().FullName));
 		}
 
 		[TearDown]

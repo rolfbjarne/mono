@@ -27,28 +27,16 @@ namespace MonoTests.System.Net
 		[SetUp]
 		public void SetUp ()
 		{
-			_tempDirectory = Path.Combine (MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory (), "MonoTests.System.Net.FileWebResponseTest");
+			_tempDirectory = MonoTests.Helpers.PathHelpers.CreateTemporaryDirectory ("MonoTests.System.Net.FileWebResponseTest");
 			_tempFile = Path.Combine (_tempDirectory, "FileWebResponseTest.tmp");
-			if (!Directory.Exists (_tempDirectory)) {
-				Directory.CreateDirectory (_tempDirectory);
-			} else {
-				// ensure no files are left over from previous runs
-				string [] files = Directory.GetFiles (_tempDirectory, "*");
-				foreach (string file in files)
-					File.Delete (file);
-			}
 			_tempFileUri = GetTempFileUri ();
 		}
 
 		[TearDown]
 		public void TearDown ()
 		{
-			if (Directory.Exists (_tempDirectory)) {
-				string [] files = Directory.GetFiles (_tempDirectory, "*");
-				foreach (string file in files)
-					File.Delete (file);
+			if (Directory.Exists (_tempDirectory))
 				Directory.Delete (_tempDirectory, true);
-			}
 		}
 
 		[Test]

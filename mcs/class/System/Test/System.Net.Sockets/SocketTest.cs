@@ -470,6 +470,7 @@ namespace MonoTests.System.Net.Sockets
 			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 0);
 			server.Bind (ep);
 			server.Listen (1);
+			ep = (IPEndPoint) server.LocalEndPoint;
 
 			Socket client = new Socket (AddressFamily.InterNetwork, 
 				SocketType.Stream, ProtocolType.Tcp);
@@ -746,7 +747,7 @@ namespace MonoTests.System.Net.Sockets
 			Socket sock = new Socket (AddressFamily.InterNetwork,
 						  SocketType.Stream,
 						  ProtocolType.Tcp);
-			IPEndPoint ep = NetworkHelpers.LocalEphemeralEndPoint ();
+			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 0);
 			
 			Assert.AreEqual (false, sock.IsBound, "IsBoundTcp #1");
 			
@@ -754,7 +755,8 @@ namespace MonoTests.System.Net.Sockets
 			Assert.AreEqual (true, sock.IsBound, "IsBoundTcp #2");
 
 			sock.Listen (1);
-			
+			ep = (IPEndPoint) sock.LocalEndPoint;
+
 			Socket sock2 = new Socket (AddressFamily.InterNetwork,
 						   SocketType.Stream,
 						   ProtocolType.Tcp);
@@ -780,7 +782,7 @@ namespace MonoTests.System.Net.Sockets
 			Socket sock = new Socket (AddressFamily.InterNetwork,
 						  SocketType.Dgram,
 						  ProtocolType.Udp);
-			IPEndPoint ep = NetworkHelpers.LocalEphemeralEndPoint ();
+			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 0);
 			
 			Assert.AreEqual (false, sock.IsBound, "IsBoundUdp #1");
 			
@@ -789,7 +791,7 @@ namespace MonoTests.System.Net.Sockets
 			
 			sock.Close ();
 			Assert.AreEqual (true, sock.IsBound, "IsBoundUdp #3");
-			
+			ep = (IPEndPoint) sock.LocalEndPoint;
 
 			sock = new Socket (AddressFamily.InterNetwork,
 					   SocketType.Dgram,
@@ -1378,6 +1380,8 @@ namespace MonoTests.System.Net.Sockets
 			sock.Bind (ep);
 			sock.Listen (1);
 			
+			ep = (IPEndPoint) sock.LocalEndPoint;
+
 			BACalledBack.Reset ();
 			
 			sock.BeginAccept (BACallback, sock);
@@ -1446,6 +1450,8 @@ namespace MonoTests.System.Net.Sockets
 			
 			sock.Bind (ep);
 			sock.Listen (1);
+
+			ep = (IPEndPoint) sock.LocalEndPoint;
 			
 			BADCalledBack.Reset ();
 			
@@ -1578,6 +1584,8 @@ namespace MonoTests.System.Net.Sockets
 			sock.Bind (ep);
 			sock.Listen (1);
 			
+			ep = (IPEndPoint) sock.LocalEndPoint;
+
 			BADCalledBack.Reset ();
 			
 			sock.BeginAccept (acc, 256, BADCallback, sock);
@@ -1711,6 +1719,7 @@ namespace MonoTests.System.Net.Sockets
 
 			listen.Bind (ep);
 			listen.Listen (1);
+			ep = (IPEndPoint) listen.LocalEndPoint;
 			
 			BCCalledBack.Reset ();
 			
@@ -4693,6 +4702,7 @@ namespace MonoTests.System.Net.Sockets
 				var ep = server.LocalEndPoint as IPEndPoint;
 				var client = new Socket (AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
 				client.DualMode = true;
+				Console.WriteLine ("ConnectToIPV4EndPointUsingDualModelSocket: {0}", ep);
 				client.Connect (ep);
 				client.Disconnect (false);
 				client.Close ();
