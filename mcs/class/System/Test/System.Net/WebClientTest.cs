@@ -1433,10 +1433,8 @@ namespace MonoTests.System.Net
 #endif
 		public void UploadValues1 ()
 		{
-			IPEndPoint ep = NetworkHelpers.LocalEphemeralEndPoint ();
-			string url = "http://" + ep.ToString () + "/test/";
-
-			using (SocketResponder responder = new SocketResponder (ep, s => EchoRequestHandler (s))) {
+			using (SocketResponder responder = new SocketResponder (out var ep, s => EchoRequestHandler (s))) {
+				string url = "http://" + ep.ToString () + "/test/";
 				WebClient wc = new WebClient ();
 				wc.Encoding = Encoding.ASCII;
 
@@ -1909,11 +1907,9 @@ namespace MonoTests.System.Net
 
 		public void UploadAsyncCancelEventTest (int port, Action<WebClient, Uri, EventWaitHandle> uploadAction)
 		{
-			var ep = NetworkHelpers.LocalEphemeralEndPoint ();
-			string url = "http://" + ep.ToString() + "/test/";
-
-			using (var responder = new SocketResponder (ep, s => EchoRequestHandler (s)))
+			using (var responder = new SocketResponder (out var ep, s => EchoRequestHandler (s)))
 			{
+				string url = "http://" + ep.ToString() + "/test/";
 				var webClient = new WebClient ();
 
 				var cancellationTokenSource = new CancellationTokenSource ();

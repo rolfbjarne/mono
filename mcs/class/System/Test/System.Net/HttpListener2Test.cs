@@ -62,16 +62,22 @@ namespace MonoTests.System.Net {
 			}
 		}
 
+		public static HttpListener CreateAndStartListener (string host, string path, int port, AuthenticationSchemes? authSchemes = null)
+		{
+			var listener = new HttpListener ();
+			if (authSchemes.HasValue)
+				listener.AuthenticationSchemes = authSchemes.Value;
+			listener.Prefixes.Add (host + port + path);
+			listener.Start ();
+			return listener;
+		}
+
 		public static HttpListener CreateAndStartListener (string host, string path, out int port, AuthenticationSchemes? authSchemes = null)
 		{
 			for (int i = 0; i < 10; i++) {
 				try {
-					var listener = new HttpListener ();
 					var tentativePort = NetworkHelpers.FindFreePort (); // FindFreePort might return a port that's immediately used by something else, so try a few times.
-					if (authSchemes.HasValue)
-						listener.AuthenticationSchemes = authSchemes.Value;
-					listener.Prefixes.Add (host + tentativePort + path);
-					listener.Start ();
+					var listener = CreateAndStartListener (host, path, tentativePort, authSchemes);
 					port = tentativePort;
 					return listener;
 				} catch (SocketException se) {

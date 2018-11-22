@@ -132,7 +132,7 @@ namespace MonoTests.System.Net.Sockets {
 			Socket s;
 			IPEndPoint localEP;
 
-			using (MyUdpClient client = new MyUdpClient (IPEndPoint.MinPort)) 
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient (IPEndPoint.MinPort))) 
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#A:Client");
@@ -152,7 +152,7 @@ namespace MonoTests.System.Net.Sockets {
 				Assert.AreEqual (IPAddress.Any, localEP.Address, "#A:Client:LocalEndPoint/Address");
 				Assert.AreEqual (AddressFamily.InterNetwork, localEP.AddressFamily, "#A:Client:LocalEndPoint/AddressFamily");
 			}
-			using (MyUdpClient client = new MyUdpClient (IPEndPoint.MaxPort))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient (IPEndPoint.MaxPort)))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#B:Client");
@@ -215,7 +215,7 @@ namespace MonoTests.System.Net.Sockets {
 			IPEndPoint clientEP;
 
 			clientEP = new IPEndPoint (IPAddress.Loopback, NetworkHelpers.FindFreePort ());
-			using (MyUdpClient client = new MyUdpClient (clientEP))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient (clientEP)))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#A:Client");
@@ -265,7 +265,7 @@ namespace MonoTests.System.Net.Sockets {
 			Socket s;
 			IPEndPoint localEP;
 
-			using (MyUdpClient client = new MyUdpClient (IPEndPoint.MinPort, AddressFamily.InterNetwork))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient (IPEndPoint.MinPort, AddressFamily.InterNetwork)))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#A:Client");
@@ -289,7 +289,7 @@ namespace MonoTests.System.Net.Sockets {
 			if (!Socket.OSSupportsIPv6)
 				Assert.Ignore ("IPv6 not enabled.");
 
-			using (MyUdpClient client = new MyUdpClient (IPEndPoint.MaxPort, AddressFamily.InterNetworkV6))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient (IPEndPoint.MaxPort, AddressFamily.InterNetworkV6)))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#B:Client");
@@ -383,7 +383,7 @@ namespace MonoTests.System.Net.Sockets {
 			Socket s;
 			IPEndPoint localEP;
 
-			using (MyUdpClient client = new MyUdpClient ("127.0.0.1", 0))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient ("127.0.0.1", NetworkHelpers.FindFreePort ())))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#A:Client");
@@ -403,7 +403,7 @@ namespace MonoTests.System.Net.Sockets {
 				Assert.AreEqual (IPAddress.Loopback, localEP.Address, "#A:Client:LocalEndPoint/Address");
 				Assert.AreEqual (AddressFamily.InterNetwork, localEP.AddressFamily, "#A:Client:LocalEndPoint/AddressFamily");
 			}
-			using (MyUdpClient client = new MyUdpClient ("127.0.0.1", IPEndPoint.MaxPort))
+			using (MyUdpClient client = MyUdpClient.Create (() => new MyUdpClient ("127.0.0.1", IPEndPoint.MaxPort)))
 			{
 				s = client.Client;
 				Assert.IsNotNull (s, "#B:Client");
@@ -1203,6 +1203,21 @@ namespace MonoTests.System.Net.Sockets {
 				set { base.Active = value; }
 			}
 
+			public static MyUdpClient Create (Func<MyUdpClient> create, int attempts = 10)
+			{
+				for (int i = 0; i < attempts; i++) {
+					try {
+						return create ();
+					} catch (SocketException se) {
+						if (se.SocketErrorCode == SocketError.AddressAlreadyInUse) {
+							global::System.Threading.Thread.Sleep (new Random ((int) DateTime.Now.Ticks).Next (100, 1000)); // Sleep for a little bit.
+							continue;
+						}
+						throw;
+					}
+				}
+				return create ();
+			}
 		}
 	}
 }

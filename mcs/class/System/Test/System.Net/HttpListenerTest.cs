@@ -188,7 +188,7 @@ namespace MonoTests.System.Net {
 		public void TwoListeners_SameAddress ()
 		{
 			HttpListener listener1 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/", out var port);
-			HttpListener listener2 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", out port);
+			HttpListener listener2 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", port);
 		}
 
 		[Test]
@@ -200,8 +200,8 @@ namespace MonoTests.System.Net {
 		[Category ("NotWorkingRuntimeInterpreter")]
 		public void TwoListeners_SameURL ()
 		{
-			HttpListener listener1= HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", out var port);
-			HttpListener listener2 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", out port);
+			HttpListener listener1 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", out var port);
+			HttpListener listener2 = HttpListener2Test.CreateAndStartListener ("http://127.0.0.1:", "/hola/", port);
 		}
 
 		[Test]
