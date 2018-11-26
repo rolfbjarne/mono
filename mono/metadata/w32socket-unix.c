@@ -8,7 +8,7 @@
 
 #include <config.h>
 #include <glib.h>
-
+#include <execinfo.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
@@ -88,7 +88,7 @@ socket_data_close (MonoFDHandle *fdhandle)
 
 	info = mono_thread_info_current ();
 
-	mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: closing fd %d", __func__, ((MonoFDHandle*) sockethandle)->fd);
+	mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: closing fd %p", __func__, ((MonoFDHandle*) sockethandle)->fd);
 
 	/* Shutdown the socket for reading, to interrupt any potential
 	 * receives that may be blocking for data.  See bug 75705. */
@@ -217,6 +217,14 @@ mono_w32socket_connect (SOCKET sock, const struct sockaddr *addr, int addrlen, g
 		errnum = errno;
 
 		if (errno != EINTR) {
+			if (addr->sa_family == AF_INET) {
+				struct sockaddr_in *sa = (struct sockaddr_in *) addr;
+				mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, family: AF_INET port: %i addr: %s, %i) => failed (%i = %s)\n",
+					__func__, ((MonoFDHandle*) sockethandle)->fd, ntohs (sa->sin_port), inet_ntoa (sa->sin_addr), addrlen, errno, strerror (errno));
+			} else {
+				mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, %p - family: %i, %i) => failed (%i = %s)\n",
+					__func__, ((MonoFDHandle*) sockethandle)->fd, addr, addr->sa_family, addrlen, errno, strerror (errno));
+			}
 			mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: connect error: %s", __func__,
 				   g_strerror (errnum));
 
@@ -286,6 +294,15 @@ mono_w32socket_connect (SOCKET sock, const struct sockaddr *addr, int addrlen, g
 			mono_fdhandle_unref ((MonoFDHandle*) sockethandle);
 			return SOCKET_ERROR;
 		}
+	}
+
+	if (addr->sa_family == AF_INET) {
+		struct sockaddr_in *sa = (struct sockaddr_in *) addr;
+		mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, family: AF_INET port: %i addr: %s, %i) => connect success\n",
+			__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), ntohs (sa->sin_port), inet_ntoa (sa->sin_addr), addrlen);
+	} else {
+		mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, %p - family: %i, %i) => connect success\n",
+			__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), addr, addr->sa_family, addrlen);
 	}
 
 	mono_fdhandle_unref ((MonoFDHandle*) sockethandle);
@@ -745,7 +762,7 @@ retry_socket:
 
 	mono_fdhandle_insert ((MonoFDHandle*) sockethandle);
 
-	mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: returning socket handle %p", __func__, GINT_TO_POINTER(((MonoFDHandle*) sockethandle)->fd));
+	mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s (domain: %i, type: %i, protocol: %i): returning socket handle %p", __func__, domain, type, protocol, GINT_TO_POINTER(((MonoFDHandle*) sockethandle)->fd));
 
 	return ((MonoFDHandle*) sockethandle)->fd;
 }
@@ -772,10 +789,27 @@ mono_w32socket_bind (SOCKET sock, struct sockaddr *addr, socklen_t addrlen)
 	MONO_EXIT_GC_SAFE;
 	if (ret == -1) {
 		gint errnum = errno;
+		if (addr->sa_family == AF_INET) {
+			struct sockaddr_in *sa = (struct sockaddr_in *) addr;
+			mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, family: AF_INET port: %i addr: %s, %i) => bind failure (%i = %s)\n",
+				__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), ntohs (sa->sin_port), inet_ntoa (sa->sin_addr), addrlen, errno, strerror (errno));
+		} else {
+			mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, %p - family: %i, %i) => bind failure (%i = %s)\n",
+				__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), addr, addr->sa_family, addrlen, errno, strerror (errno));
+		}
 		mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: bind error: %s", __func__, g_strerror(errno));
 		mono_w32socket_set_last_error (mono_w32socket_convert_error (errnum));
 		mono_fdhandle_unref ((MonoFDHandle*) sockethandle);
 		return SOCKET_ERROR;
+	}
+
+	if (addr->sa_family == AF_INET) {
+		struct sockaddr_in *sa = (struct sockaddr_in *) addr;
+		mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, family: AF_INET port: %i addr: %s, %i) => bind success\n",
+			__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), ntohs (sa->sin_port), inet_ntoa (sa->sin_addr), addrlen);
+	} else {
+		mono_trace (G_LOG_LEVEL_DEBUG, MONO_TRACE_IO_LAYER_SOCKET, "%s: (%p, %p - family: %i, %i) => bind success\n",
+			__func__, GINT_TO_POINTER (((MonoFDHandle*) sockethandle)->fd), addr, addr->sa_family, addrlen);
 	}
 
 	mono_fdhandle_unref ((MonoFDHandle*) sockethandle);
@@ -1427,8 +1461,8 @@ mono_w32socket_get_last_error (void)
 	return mono_w32error_get_last ();
 }
 
-gint32
-mono_w32socket_convert_error (gint error)
+static gint32
+mono_w32socket_convert_error_impl (gint error)
 {
 	switch (error) {
 	case 0: return ERROR_SUCCESS;
@@ -1541,6 +1575,23 @@ mono_w32socket_convert_error (gint error)
 	default:
 		g_error ("%s: no translation into winsock error for (%d) \"%s\"", __func__, error, g_strerror (error));
 	}
+}
+
+gint32
+mono_w32socket_convert_error (gint error)
+{
+	gint32 rv;
+	rv = mono_w32socket_convert_error_impl (error);
+	fprintf (stderr, "mono_w32socket_convert_error (%i = %s) => %i\n", (int) error, strerror (error), (int) rv);
+	// void *trace [200];
+	// int funcs = backtrace (trace, 200);
+	// if (funcs > 0) {
+	// 	char **symbols = backtrace_symbols (trace, funcs);
+	// 	for (int i = 0; i < funcs; i++)
+	// 		fprintf (stderr, "    %s\n", symbols [i]);
+	// 	free (symbols);
+	// }
+	return rv;
 }
 
 MonoBoolean

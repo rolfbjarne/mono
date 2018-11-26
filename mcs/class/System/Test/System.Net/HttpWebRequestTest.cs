@@ -975,7 +975,7 @@ namespace MonoTests.System.Net
 		{
 			// allow autoredirect
 			using (SocketResponder responder = new SocketResponder (out var localEP, s => RedirectRequestHandler (s))) {
-			string url = "http://" + localEP.ToString () + "/original/";
+				string url = "http://" + localEP.ToString () + "/original/";
 				HttpWebRequest req = (HttpWebRequest) WebRequest.Create (url);
 				req.Method = "POST";
 				req.Timeout = 2000;

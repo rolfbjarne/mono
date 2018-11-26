@@ -67,6 +67,22 @@ namespace MonoTests.Helpers
 			listenTask = Task.Run ((Action) Listen);
 		}
 
+
+		public SocketResponder (out IPEndPoint ep, SocketRequestHandler rh)
+		{
+			requestHandler = rh;
+
+			tcpListener = new TcpListener (new IPEndPoint (IPAddress.Loopback, 0));
+			tcpListener.Start ();
+			ep = (IPEndPoint) tcpListener.LocalEndpoint;
+			listenTask = Task.Run ((Action) Listen);
+			Console.WriteLine ("Created socket responder: {0}", ep);
+		}
+
+		public TcpListener TcpListener {
+			get { return tcpListener; }
+		}
+
 		public void Dispose ()
 		{
 			if (disposed)

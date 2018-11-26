@@ -787,11 +787,11 @@ namespace MonoTests.System.Net.Sockets
 			Assert.AreEqual (false, sock.IsBound, "IsBoundUdp #1");
 			
 			sock.Bind (ep);
+			ep = (IPEndPoint) sock.LocalEndPoint;
 			Assert.AreEqual (true, sock.IsBound, "IsBoundUdp #2");
 			
 			sock.Close ();
 			Assert.AreEqual (true, sock.IsBound, "IsBoundUdp #3");
-			ep = (IPEndPoint) sock.LocalEndPoint;
 
 			sock = new Socket (AddressFamily.InterNetwork,
 					   SocketType.Dgram,

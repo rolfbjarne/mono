@@ -782,12 +782,16 @@ namespace System.Net.Sockets
 			int error;
 			Bind_internal (m_Handle, localEP.Serialize(), out error);
 
-			if (error != 0)
-				throw new SocketException (error);
+			if (error != 0) {
+				var ex = new SocketException (error);
+				Console.WriteLine ("{2} Bind ({0}) => SocketException: {1}", localEP, ex.Message, global::System.Threading.Thread.CurrentThread.ManagedThreadId);
+				throw ex;
+			}
 			if (error == 0)
 				is_bound = true;
 
 			seed_endpoint = localEP;
+			Console.WriteLine ("{1} Bind ({0}) SUCCESS => {2}", localEP, global::System.Threading.Thread.CurrentThread.ManagedThreadId, LocalEndPoint);
 #endif // FEATURE_NO_BSD_SOCKETS
 		}
 
