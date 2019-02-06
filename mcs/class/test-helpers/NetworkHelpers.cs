@@ -17,6 +17,9 @@ namespace MonoTests.Helpers {
 
 		public static IPEndPoint LocalEphemeralEndPoint ()
 		{
+#if FEATURE_NO_BSD_SOCKETS
+			throw new PlatformNotSupportedException ();
+#endif
 			int counter = 0;
 
 			while (counter < 1000) {
